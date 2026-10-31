@@ -20,11 +20,11 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// Création garantie de la table users au démarrage
+// Création de la table avec la colonne 'phone'
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
+    phone TEXT UNIQUE,
     password TEXT
   )`, (err) => {
     if (err) {
@@ -40,37 +40,37 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Route Inscription (/api/register) avec logs de diagnostic
+// Route Inscription (/api/register)
 app.post('/api/register', (req, res) => {
   console.log("Données d'inscription reçues :", req.body);
-  const { username, password } = req.body;
+  const { phone, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ success: false, message: 'Nom d\'utilisateur et mot de passe requis', received: req.body });
+  if (!phone || !password) {
+    return res.status(400).json({ success: false, message: 'Téléphone et mot de passe requis' });
   }
 
-  db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, password], function(err) {
+  db.run(`INSERT INTO users (phone, password) VALUES (?, ?)`, [phone, password], function(err) {
     if (err) {
       console.error("Erreur SQL insertion :", err.message);
-      return res.status(400).json({ success: false, message: 'Ce nom d\'utilisateur existe déjà ou erreur SQL' });
+      return res.status(400).json({ success: false, message: 'Ce numéro existe déjà' });
     }
     res.json({ success: true, message: 'Compte créé avec succès' });
   });
 });
 
-// Route Connexion (/api/login) avec logs de diagnostic
+// Route Connexion (/api/login)
 app.post('/api/login', (req, res) => {
   console.log("Tentative de connexion reçue :", req.body);
-  const { username, password } = req.body;
+  const { phone, password } = req.body;
 
-  if (!username || !password) {
+  if (!phone || !password) {
     return res.status(400).json({ success: false, message: 'Champs manquants' });
   }
 
-  db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
+  db.get(`SELECT * FROM users WHERE phone = ? AND password = ?`, [phone, password], (err, row) => {
     if (err) {
       console.error("Erreur SQL SELECT :", err.message);
-      return res.status(500).json({ success: false, message: 'Erreur interne base de données: ' + err.message });
+      return res.status(500).json({ success: false, message: 'Erreur interne base de données' });
     }
     
     if (row) {

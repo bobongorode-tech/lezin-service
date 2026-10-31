@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 2. Servir les fichiers statiques (HTML, CSS, JS, images, manifest, sw.js) depuis le dossier 'public'
+// 2. Servir les fichiers statiques (HTML, CSS, JS, images, PWA) depuis le dossier 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
 // 3. Connexion et initialisation de la base de données SQLite (cremerie.db)
@@ -22,7 +22,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
   }
 });
 
-// Création automatique de la table des utilisateurs et d'un compte admin par défaut si vide
+// Création automatique de la table users et d'un compte admin par défaut si la table est vide
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +32,6 @@ db.serialize(() => {
     if (!err) {
       db.get(`SELECT COUNT(*) as count FROM users`, (err, row) => {
         if (row && row.count === 0) {
-          // Compte par défaut modifiable : admin / 1234
           db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, ['admin', '1234'], (err) => {
             if (!err) console.log('Utilisateur administrateur par défaut créé (admin / 1234).');
           });
@@ -44,13 +43,13 @@ db.serialize(() => {
 
 // 4. Routes de l'application
 
-// Route racine : redirige ou affiche directement la page de connexion
+// Route racine : sert la page de connexion
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Route de connexion (POST /login)
-app.post('/login', (req, res) => {
+// Route API de Connexion (/api/login)
+app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
   db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
@@ -60,12 +59,29 @@ app.post('/login', (req, res) => {
     }
     
     if (row) {
-      // Connexion réussie
+      // Connexion réussie, renvoie l'URL de redirection vers le dashboard
       res.json({ success: true, redirect: '/dashboard.html' });
     } else {
       // Identifiants incorrects
       res.status(401).json({ success: false, message: 'Nom d\'utilisateur ou mot de passe incorrect' });
     }
+  });
+});
+
+// Route API d'Inscription (/api/register)
+app.post('/api/register', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ success: false, message: 'Nom d\'utilisateur et mot de passe requis' });
+  }
+
+  db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, password], function(err) {
+    if (err) {
+      console.error(err);
+      return res.status(400).json({ success: false, message: 'Ce nom d\'utilisateur existe déjà ou une erreur est survenue' });
+    }
+    res.json({ success: true, message: 'Utilisateur créé avec succès' });
   });
 });
 

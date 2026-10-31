@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+    <meta name="color-scheme" content="light dark">
+    <title>Lezin Service — Gestion</title>
+    <!-- Icône pour navigateur et Android -->
+    <link rel="icon" type="image/png" href="/icon.png">
+ 
+    <!-- Icône spécifique pour iPhone / iPad (Écran d'accueil) -->
+    <link rel="apple-touch-icon" href="/icon.png">
+ 
+    <!-- Lien vers le fichier manifest PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --bg-glow-1: rgba(0, 113, 227, 0.10);
+            --bg-glow-2: rgba(175, 82, 222, 0.07);
+            --card-bg: rgba(255, 255, 255, 0.78);
+            --card-border: rgba(255, 255, 255, 0.7);
+            --text: #1d1d1f;
+            --text-2: #6e6e73;
+            --text-3: #86868b;
+            --separator: rgba(60, 60, 67, 0.12);
+            --field-bg: rgba(255, 255, 255, 0.9);
+            --field-border: #d2d2d7;
+            --chip-bg: rgba(118, 118, 128, 0.12);
+            --segment-active: #ffffff;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
+            --green: #1d9b3f;
+            --green-bg: rgba(52, 199, 89, 0.14);
+            --red: #e0281c;
+            --red-bg: rgba(255, 59, 48, 0.12);
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+            --radius: 22px;
+            --radius-field: 14px;
+            --ease: cubic-bezier(0.25, 1, 0.5, 1);
+        }
+ 
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #000000;
+                --bg-glow-1: rgba(10, 132, 255, 0.18);
+                --bg-glow-2: rgba(191, 90, 242, 0.12);
+                --card-bg: rgba(28, 28, 30, 0.78);
+                --card-border: rgba(255, 255, 255, 0.08);
+                --text: #f5f5f7;
+                --text-2: #a1a1a6;
+                --text-3: #8e8e93;
+                --separator: rgba(255, 255, 255, 0.10);
+                --field-bg: rgba(44, 44, 46, 0.8);
+                --field-border: #3a3a3c;
+                --chip-bg: rgba(118, 118, 128, 0.24);
+                --segment-active: #636366;
+                --accent: #0a84ff;
+                --accent-hover: #409cff;
+                --green: #32d74b;
+                --green-bg: rgba(48, 209, 88, 0.16);
+                --red: #ff6961;
+                --red-bg: rgba(255, 69, 58, 0.16);
+                --shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            }
+        }
+ 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { -webkit-text-size-adjust: 100%; }
+ 
+        body {
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+                     max(32px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text);
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(60% 40% at 10% 0%, var(--bg-glow-1) 0%, transparent 70%),
+                radial-gradient(50% 40% at 95% 30%, var(--bg-glow-2) 0%, transparent 70%);
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+ 
+        button { font: inherit; }
+ 
+        .container {
+            max-width: 880px;
+            margin: 0 auto;
+            display: grid;
+            gap: 16px;
+        }
+ 
+        .surface {
+            background: var(--card-bg);
+            -webkit-backdrop-filter: saturate(180%) blur(24px);
+            backdrop-filter: saturate(180%) blur(24px);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+ 
+        .container > * { animation: rise 0.6s var(--ease) both; }
+        .container > *:nth-child(2) { animation-delay: 0.05s; }
+        .container > *:nth-child(3) { animation-delay: 0.10s; }
+        .container > *:nth-child(4) { animation-delay: 0.15s; }
+ 
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: none; }
+        }
+ 
+        /* ---------- Barre d'outils ---------- */
+        .toolbar { padding: 16px 18px 18px; display: grid; gap: 14px; }
+ 
+        .toolbar-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+ 
+        .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+ 
+        .brand-mark {
+            flex: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 11px;
+            display: grid;
+            place-items: center;
+            font-size: 19px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(145deg, #4da3ff 0%, var(--accent) 55%, #0050b3 100%);
+            box-shadow: 0 6px 14px rgba(0, 113, 227, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+ 
+        .brand-text { min-width: 0; }
+        .brand-text strong { display: block; font-size: 17px; letter-spacing: -0.4px; }
+        .brand-text span {
+            display: block;
+            font-size: 12px;
+            color: var(--text-3);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+ 
+        .actions { display: flex; gap: 8px; flex: none; }
+ 
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 38px;
+            padding: 0 14px;
+            font-size: 14px;
+            font-weight: 600;
+            border: 0;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: transform 0.2s var(--ease), opacity 0.2s var(--ease), background 0.2s var(--ease);
+        }
+ 
+        .btn:active { transform: scale(0.96); }
+        .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .btn svg { width: 16px; height: 16px; }
+ 
+        .btn-soft { color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, transparent); }
+        .btn-soft:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); }
+        .btn-danger-soft { color: var(--red); background: var(--red-bg); }
+        .btn-danger-soft:hover { opacity: 0.85; }
+ 
+        .filters {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) auto auto;
+            gap: 10px;
+            align-items: center;
+        }
+ 
+        .search { position: relative; }
+        .search svg {
+            position: absolute;
+            left: 13px;
+            top: 50%;
+            width: 17px;
+            height: 17px;
+            transform: translateY(-50%);
+            color: var(--text-3);
+            pointer-events: none;
+        }
+ 
+        .search input, .date-filter input {
+            width: 100%;
+            height: 42px;
+            font: inherit;
+            font-size: 16px; /* évite le zoom iOS */
+            color: var(--text);
+            background: var(--chip-bg);
+            border: 1px solid transparent;
+            border-radius: 12px;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease), background 0.25s var(--ease);
+        }
+ 
+        .search input { padding: 0 14px 0 38px; }
+        .date-filter input { padding: 0 12px; min-width: 150px; }
+ 
+        .search input:focus, .date-filter input:focus {
+            background: var(--field-bg);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+        }
+ 
+        .date-filter { position: relative; display: flex; align-items: center; }
+        .date-filter .clear {
+            position: absolute;
+            right: 34px;
+            width: 22px;
+            height: 22px;
+            display: none;
+            place-items: center;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1;
+            color: var(--text-3);
+            background: transparent;
+            border: 0;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .date-filter.has-value .clear { display: grid; }
+        .date-filter .clear:hover { color: var(--text); }
+ 
+        /* Contrôle segmenté */
+        .segmented {
+            position: relative;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            padding: 3px;
+            background: var(--chip-bg);
+            border-radius: 12px;
+        }
+ 
+        .segmented .thumb {
+            position: absolute;
+            top: 3px; bottom: 3px; left: 3px;
+            width: calc((100% - 6px) / 3);
+            background: var(--segment-active);
+            border-radius: 9px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.35s var(--ease);
+        }
+ 
+        .segmented[data-value="recette"] .thumb { transform: translateX(100%); }
+        .segmented[data-value="depense"] .thumb { transform: translateX(200%); }
+ 
+        .segmented button {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            padding: 9px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-2);
+            background: transparent;
+            border: 0;
+            border-radius: 9px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.25s var(--ease);
+        }
+ 
+        .segmented button[aria-pressed="true"] { color: var(--text); }
+        .segmented button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+ 
+        /* ---------- Cartes de chiffres ---------- */
+        .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+ 
+        .card { padding: 18px 16px; transition: transform 0.3s var(--ease); }
+        .card:hover { transform: translateY(-2px); }
+ 
+        .card h3 {
+            margin: 0 0 8px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-3);
+        }
+ 
+        .card p {
+            margin: 0;
+            font-size: clamp(18px, 3.4vw, 24px);
+            font-weight: 700;
+            letter-spacing: -0.6px;
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+ 
+        .card.net { background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 14%, var(--card-bg)), var(--card-bg)); }
+ 
+        .text-green { color: var(--green); }
+        .text-red { color: var(--red); }
+        .text-blue { color: var(--accent); }
+ 
+        /* ---------- Boîtes ---------- */
+        .box { padding: clamp(18px, 4vw, 26px); }
+ 
+        .box-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+ 
+        .box h2 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.4px; }
+        .count { font-size: 13px; color: var(--text-3); white-space: nowrap; }
+ 
+        /* ---------- Formulaire ---------- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+ 
+        .form-grid .full { grid-column: 1 / -1; }
+ 
+        .type-switch {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 3px;
+            background: var(--chip-bg);
+            border-radius: 12px;
+        }
+ 
+        .type-switch .thumb {
+            position: absolute;
+            top: 3px; bottom: 3px; left: 3px;
+            width: calc(50% - 3px);
+            background: var(--segment-active);
+            border-radius: 9px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.35s var(--ease);
+        }
+ 
+        .type-switch[data-value="depense"] .thumb { transform: translateX(100%); }
+ 
+        .type-switch button {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            padding: 11px 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-2);
+            background: transparent;
+            border: 0;
+            border-radius: 9px;
+            cursor: pointer;
+            transition: color 0.25s var(--ease);
+        }
+ 
+        .type-switch button[aria-pressed="true"] { color: var(--text); }
+        .type-switch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+ 
+        .field { position: relative; }
+ 
+        .field input {
+            width: 100%;
+            height: 56px;
+            padding: 22px 16px 8px;
+            font: inherit;
+            font-size: 16px;
+            color: var(--text);
+            background: var(--field-bg);
+            border: 1px solid var(--field-border);
+            border-radius: var(--radius-field);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+        }
+ 
+        .field input::placeholder { color: transparent; }
+ 
+        .field label {
+            position: absolute;
+            left: 17px;
+            top: 18px;
+            font-size: 16px;
+            color: var(--text-3);
+            pointer-events: none;
+            transform-origin: left top;
+            transition: transform 0.25s var(--ease), color 0.25s var(--ease);
+        }
+ 
+        .field input:focus + label,
+        .field input:not(:placeholder-shown) + label,
+        .field input[type="date"] + label { transform: translateY(-11px) scale(0.76); }
+ 
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 22%, transparent);
+        }
+ 
+        .field input:focus + label { color: var(--accent); }
+ 
+        .field input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+        .field input::-webkit-outer-spin-button,
+        .field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+ 
+        .field .unit {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding-top: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-3);
+            pointer-events: none;
+        }
+ 
+        .submit {
+            width: 100%;
+            height: 52px;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            color: #fff;
+            background: var(--accent);
+            border: 0;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent);
+            transition: background 0.25s var(--ease), transform 0.2s var(--ease);
+        }
+ 
+        .submit:hover { background: var(--accent-hover); }
+        .submit:active { transform: scale(0.98); }
+        .submit:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 45%, transparent); outline-offset: 2px; }
+        .submit:disabled { opacity: 0.7; cursor: default; }
+ 
+        .form-msg {
+            display: none;
+            padding: 10px 14px;
+            font-size: 14px;
+            border-radius: 12px;
+            color: var(--red);
+            background: var(--red-bg);
+        }
+        .form-msg.show { display: block; }
+ 
+        /* ---------- Tableau ---------- */
+        .table-container { margin: 0 -6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+ 
+        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+ 
+        th {
+            padding: 10px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            color: var(--text-3);
+            white-space: nowrap;
+            border-bottom: 1px solid var(--separator);
+        }
+ 
+        th.right, td.amount { text-align: right; }
+ 
+        td { padding: 14px 12px; vertical-align: middle; border-bottom: 1px solid var(--separator); }
+ 
+        tbody tr { transition: background 0.2s var(--ease); }
+        tbody tr:hover { background: var(--chip-bg); }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr.removing { opacity: 0; transform: translateX(12px); transition: all 0.3s var(--ease); }
+ 
+        td.date { white-space: nowrap; color: var(--text-2); }
+        td.desc { word-break: break-word; }
+        td.desc small { display: block; margin-top: 2px; font-size: 12px; color: var(--text-3); }
+        td.amount { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        td.actions-cell { text-align: right; white-space: nowrap; }
+ 
+        .badge-type {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+            border-radius: 999px;
+        }
+        .badge-recette { color: var(--green); background: var(--green-bg); }
+        .badge-depense { color: var(--red); background: var(--red-bg); }
+ 
+        .btn-delete {
+            height: 32px;
+            padding: 0 12px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--red);
+            background: var(--red-bg);
+            border: 0;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+        }
+        .btn-delete:hover { opacity: 0.8; }
+        .btn-delete:active { transform: scale(0.95); }
+        .btn-delete:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+        .btn-delete:disabled { opacity: 0.5; cursor: default; }
+ 
+        .empty { padding: 40px 12px; text-align: center; color: var(--text-3); font-size: 15px; }
+ 
+        /* ---------- Confirmation + toast ---------- */
+        dialog {
+            width: min(340px, calc(100% - 40px));
+            padding: 22px;
+            color: var(--text);
+            background: var(--card-bg);
+            -webkit-backdrop-filter: saturate(180%) blur(30px);
+            backdrop-filter: saturate(180%) blur(30px);
+            border: 1px solid var(--card-border);
+            border-radius: 22px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+            text-align: center;
+        }
+        @media (prefers-color-scheme: light) { dialog { background: rgba(255, 255, 255, 0.92); } }
+        dialog::backdrop { background: rgba(0, 0, 0, 0.35); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+        dialog[open] { animation: pop 0.3s var(--ease); }
+        @keyframes pop { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: none; } }
+ 
+        dialog h3 { margin: 0 0 6px; font-size: 17px; letter-spacing: -0.3px; }
+        dialog p { margin: 0 0 18px; font-size: 14px; color: var(--text-2); word-break: break-word; }
+        dialog .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        dialog .btn { height: 44px; border-radius: 12px; font-size: 15px; }
+        .btn-cancel { color: var(--text); background: var(--chip-bg); }
+        .btn-confirm { color: #fff; background: var(--red); }
+ 
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: max(24px, env(safe-area-inset-bottom));
+            z-index: 50;
+            max-width: calc(100% - 32px);
+            padding: 12px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            background: rgba(29, 29, 31, 0.92);
+            border-radius: 999px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translate(-50%, 20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s var(--ease);
+        }
+        .toast.show { transform: translate(-50%, 0); opacity: 1; }
+        .toast.error { background: rgba(215, 0, 21, 0.95); }
+ 
+        /* ---------- Responsive ---------- */
+        @media (max-width: 760px) {
+            .filters { grid-template-columns: 1fr 1fr; }
+            .search { grid-column: 1 / -1; }
+            .date-filter input { min-width: 0; }
+        }
+ 
+        @media (max-width: 640px) {
+            .toolbar { padding: 14px; }
+            .btn .btn-label { display: none; }
+            .btn { width: 38px; padding: 0; }
+            .filters { grid-template-columns: 1fr; }
+            .cards { grid-template-columns: 1fr 1fr; gap: 10px; }
+            .card { padding: 14px; }
+            .card.net { grid-column: 1 / -1; }
+            .card p { font-size: 22px; }
+            .form-grid { grid-template-columns: 1fr; }
+ 
+            .table-container { margin: 0; overflow: visible; }
+            table, tbody, tr, td { display: block; width: 100%; }
+            thead { display: none; }
+ 
+            tbody tr {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                grid-template-areas:
+                    "type amount"
+                    "desc desc"
+                    "date act";
+                gap: 6px 12px;
+                align-items: center;
+                padding: 14px 0;
+                border-bottom: 1px solid var(--separator);
+            }
+ 
+            tbody tr:hover { background: transparent; }
+            tbody tr:last-child { border-bottom: none; }
+            td { padding: 0; border: 0; }
+            td.type { grid-area: type; }
+            td.amount { grid-area: amount; font-size: 16px; }
+            td.desc { grid-area: desc; font-size: 15px; }
+            td.date { grid-area: date; font-size: 12px; color: var(--text-3); }
+            td.actions-cell { grid-area: act; }
+            td.empty-cell { grid-column: 1 / -1; }
+        }
+ 
+        @media (min-width: 900px) { .container { max-width: 920px; } }
+ 
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+ 
+    <div class="container">
+ 
+        <!-- Barre d'outils -->
+        <header class="toolbar surface">
+            <div class="toolbar-top">
+                <div class="brand">
+                    <div class="brand-mark" aria-hidden="true">L</div>
+                    <div class="brand-text">
+                        <strong>Lezin Service</strong>
+                        <span id="user-info">Gestion des mouvements</span>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="button" class="btn btn-soft" id="export-btn" onclick="exportToCSV()" aria-label="Exporter en CSV">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+                        <span class="btn-label">Exporter CSV</span>
+                    </button>
+                    <button type="button" class="btn btn-danger-soft" onclick="logout()" aria-label="Déconnexion">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h3a2 2 0 012 2v14a2 2 0 01-2 2h-3M10 17l5-5-5-5M15 12H3"/></svg>
+                        <span class="btn-label">Déconnexion</span>
+                    </button>
+                </div>
+            </div>
+ 
+            <div class="filters">
+                <div class="search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+                    <input type="search" id="search" placeholder="Rechercher une description…" autocomplete="off" aria-label="Rechercher par description">
+                </div>
+ 
+                <div class="segmented" id="type-filter" data-value="all" role="group" aria-label="Filtrer par type">
+                    <span class="thumb" aria-hidden="true"></span>
+                    <button type="button" data-value="all" aria-pressed="true">Toutes</button>
+                    <button type="button" data-value="recette" aria-pressed="false">Recettes</button>
+                    <button type="button" data-value="depense" aria-pressed="false">Dépenses</button>
+                </div>
+ 
+                <div class="date-filter" id="date-filter-wrap">
+                    <input type="date" id="date-filter" aria-label="Filtrer par date">
+                    <button type="button" class="clear" id="date-clear" aria-label="Effacer la date">✕</button>
+                </div>
+            </div>
+        </header>
+ 
+        <!-- Chiffres (calculés sur la sélection filtrée) -->
+        <section class="cards" aria-label="Résumé">
+            <div class="card surface">
+                <h3>Recettes</h3>
+                <p id="total-recettes" class="text-green">0 F</p>
+            </div>
+            <div class="card surface">
+                <h3>Dépenses</h3>
+                <p id="total-depenses" class="text-red">0 F</p>
+            </div>
+            <div class="card surface net">
+                <h3>Solde net</h3>
+                <p id="total-net" class="text-blue">0 F</p>
+            </div>
+        </section>
+ 
+        <!-- Formulaire -->
+        <section class="box surface" id="form-box">
+            <div class="box-head"><h2>Nouvelle transaction</h2></div>
+            <form id="transaction-form" novalidate>
+                <div class="form-grid">
+                    <div class="full">
+                        <div class="type-switch" id="type-switch" data-value="recette" role="group" aria-label="Type de transaction">
+                            <span class="thumb" aria-hidden="true"></span>
+                            <button type="button" data-value="recette" aria-pressed="true">🟢 Recette</button>
+                            <button type="button" data-value="depense" aria-pressed="false">🔴 Dépense</button>
+                        </div>
+                    </div>
+ 
+                    <div class="field">
+                        <input type="number" id="amount" placeholder="Montant" inputmode="numeric" min="1" step="any" required>
+                        <label for="amount">Montant</label>
+                        <span class="unit">F</span>
+                    </div>
+ 
+                    <div class="field">
+                        <input type="date" id="date" required>
+                        <label for="date">Date</label>
+                    </div>
+ 
+                    <div class="field full">
+                        <input type="text" id="description" placeholder="Description" autocomplete="off" maxlength="200" required>
+                        <label for="description">Description</label>
+                    </div>
+ 
+                    <div class="form-msg full" id="form-msg" role="alert"></div>
+ 
+                    <div class="full">
+                        <button type="submit" class="submit" id="save-btn">Enregistrer</button>
+                    </div>
+                </div>
+            </form>
+        </section>
+ 
+        <!-- Tableau -->
+        <section class="box surface">
+            <div class="box-head">
+                <h2 id="history-title">Historique</h2>
+                <span class="count" id="count">—</span>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Type</th>
+                            <th class="right">Montant</th>
+                            <th class="right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transaction-table-body">
+                        <tr><td colspan="5" class="empty empty-cell">Chargement…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+ 
+    <!-- Confirmation de suppression -->
+    <dialog id="confirm-dialog">
+        <h3>Supprimer cette transaction ?</h3>
+        <p id="confirm-text"></p>
+        <div class="dialog-actions">
+            <button type="button" class="btn btn-cancel" id="confirm-cancel">Annuler</button>
+            <button type="button" class="btn btn-confirm" id="confirm-ok">Supprimer</button>
+        </div>
+    </dialog>
+ 
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+ 
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
+ 
+        /* ---------- État ---------- */
+        let transactions = [];
+        const filters = { type: 'all', date: '', search: '' };
+ 
+        /* ---------- Utilitaires ---------- */
+        const $ = (id) => document.getElementById(id);
+ 
+        // Échappe le texte avant insertion dans le HTML (protège contre l'injection de code)
+        function esc(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (c) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+ 
+        function formatAmount(n) {
+            return Number(n || 0).toLocaleString('fr-FR') + ' F';
+        }
+ 
+        function todayLocal() {
+            const d = new Date();
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            return d.toISOString().slice(0, 10);
+        }
+ 
+        // Convertit n'importe quelle date reçue en "AAAA-MM-JJ" (sert au tri et au filtre)
+        function toISODate(value) {
+            const s = String(value ?? '').trim();
+            let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+            m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
+            const d = new Date(s);
+            if (!isNaN(d)) {
+                d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                return d.toISOString().slice(0, 10);
+            }
+            return '';
+        }
+ 
+        function formatDate(iso) {
+            if (!iso) return '—';
+            const [y, m, d] = iso.split('-');
+            return `${d}/${m}/${y}`;
+        }
+ 
+        let toastTimer;
+        function toast(text, isError) {
+            const t = $('toast');
+            t.textContent = text;
+            t.className = 'toast show' + (isError ? ' error' : '');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { t.className = 'toast' + (isError ? ' error' : ''); }, 3200);
+        }
+ 
+        // Appel API commun : redirige vers la connexion si la session n'est plus valide
+        async function api(url, options) {
+            const res = await fetch(url, Object.assign({ credentials: 'same-origin' }, options));
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = '/login.html';
+                throw new Error('session');
+            }
+            return res;
+        }
+ 
+        /* ---------- Rôle (administrateur / vendeur) ---------- */
+        const ADMIN_PHONE = '065116534';
+        let currentPhone = '';
+        let serverRole = null; // rempli si l'API renvoie un champ "role"
+ 
+        function storedPhone() {
+            try { return localStorage.getItem('userPhone') || ''; } catch (_) { return ''; }
+        }
+ 
+        // Adapte l'affichage : l'administrateur voit tout mais ne peut pas ajouter de mouvement
+        function applyRole() {
+            const phone = currentPhone || storedPhone();
+            const isAdmin = serverRole !== null ? serverRole === 'admin' : phone === ADMIN_PHONE;
+ 
+            $('form-box').style.display = isAdmin ? 'none' : '';
+            $('history-title').textContent = isAdmin ? 'Contrôle global des mouvements' : 'Historique';
+            $('user-info').textContent = (phone ? 'Tél : ' + phone + ' · ' : '') +
+                (isAdmin ? 'Administrateur (vue globale)' : 'Vendeur');
+        }
+ 
+        /* ---------- Chargement ---------- */
+        async function loadTransactions() {
+            try {
+                const res = await api('/api/transactions');
+                if (!res.ok) throw new Error('http ' + res.status);
+                const data = await res.json();
+                const list = Array.isArray(data) ? data : (data.transactions || []);
+ 
+                transactions = list.map((t) => ({
+                    id: t.id,
+                    type: t.type === 'depense' ? 'depense' : 'recette',
+                    description: t.description || '',
+                    amount: Number(t.amount) || 0,
+                    iso: toISODate(t.date || t.created_at),
+                    seller: t.seller_phone || ''
+                }));
+ 
+                // Plus récent en premier
+                transactions.sort((a, b) => (b.iso.localeCompare(a.iso)) || (Number(b.id) - Number(a.id)));
+ 
+                if (!Array.isArray(data)) {
+                    if (data.phone) currentPhone = String(data.phone);
+                    if (data.role) serverRole = data.role;
+                }
+                applyRole();
+ 
+                render();
+            } catch (err) {
+                if (err.message === 'session') return;
+                $('transaction-table-body').innerHTML =
+                    '<tr><td colspan="5" class="empty empty-cell">Impossible de charger les données.</td></tr>';
+                toast('Impossible de charger les transactions.', true);
+            }
+        }
+ 
+        /* ---------- Filtrage temps réel (sans rechargement) ---------- */
+        function getFiltered() {
+            const q = filters.search.trim().toLowerCase();
+            return transactions.filter((t) => {
+                if (filters.type !== 'all' && t.type !== filters.type) return false;
+                if (filters.date && t.iso !== filters.date) return false;
+                if (q && !(t.description.toLowerCase().includes(q) || t.seller.toLowerCase().includes(q))) return false;
+                return true;
+            });
+        }
+ 
+        function render() {
+            const list = getFiltered();
+            const tbody = $('transaction-table-body');
+ 
+            let recettes = 0, depenses = 0;
+            list.forEach((t) => { t.type === 'recette' ? (recettes += t.amount) : (depenses += t.amount); });
+            const net = recettes - depenses;
+ 
+            $('total-recettes').textContent = formatAmount(recettes);
+            $('total-depenses').textContent = formatAmount(depenses);
+            const netEl = $('total-net');
+            netEl.textContent = formatAmount(net);
+            netEl.className = net >= 0 ? 'text-blue' : 'text-red';
+ 
+            $('count').textContent = list.length === transactions.length
+                ? `${list.length} mouvement${list.length > 1 ? 's' : ''}`
+                : `${list.length} sur ${transactions.length}`;
+ 
+            if (!list.length) {
+                const msg = transactions.length ? 'Aucun résultat pour ces filtres.' : 'Aucune transaction pour le moment.';
+                tbody.innerHTML = `<tr><td colspan="5" class="empty empty-cell">${msg}</td></tr>`;
+                return;
+            }
+ 
+            tbody.innerHTML = list.map((t) => {
+                const isRec = t.type === 'recette';
+                const badge = isRec
+                    ? '<span class="badge-type badge-recette">Recette</span>'
+                    : '<span class="badge-type badge-depense">Dépense</span>';
+                const seller = t.seller ? `<small>${esc(t.seller)}</small>` : '';
+                return `
+                    <tr data-id="${esc(t.id)}">
+                        <td class="date">${formatDate(t.iso)}</td>
+                        <td class="desc">${esc(t.description)}${seller}</td>
+                        <td class="type">${badge}</td>
+                        <td class="amount ${isRec ? 'text-green' : 'text-red'}">${isRec ? '+' : '−'}${formatAmount(t.amount)}</td>
+                        <td class="actions-cell">
+                            <button type="button" class="btn-delete" data-id="${esc(t.id)}">Supprimer</button>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+ 
+        /* ---------- Contrôles de la barre d'outils ---------- */
+        $('search').addEventListener('input', (e) => { filters.search = e.target.value; render(); });
+ 
+        const typeFilter = $('type-filter');
+        typeFilter.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+            filters.type = b.dataset.value;
+            typeFilter.dataset.value = b.dataset.value;
+            typeFilter.querySelectorAll('button').forEach((x) =>
+                x.setAttribute('aria-pressed', x === b));
+            render();
+        }));
+ 
+        const dateInput = $('date-filter');
+        function onDateFilter() {
+            filters.date = dateInput.value;
+            $('date-filter-wrap').classList.toggle('has-value', !!dateInput.value);
+            render();
+        }
+        dateInput.addEventListener('input', onDateFilter);
+        dateInput.addEventListener('change', onDateFilter);
+        $('date-clear').addEventListener('click', () => { dateInput.value = ''; onDateFilter(); });
+ 
+        /* ---------- Formulaire d'ajout ---------- */
+        const typeSwitch = $('type-switch');
+        let currentType = 'recette';
+        typeSwitch.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setType(b.dataset.value)));
+ 
+        function setType(value) {
+            currentType = value;
+            typeSwitch.dataset.value = value;
+            typeSwitch.querySelectorAll('button').forEach((x) =>
+                x.setAttribute('aria-pressed', x.dataset.value === value));
+        }
+ 
+        $('date').value = todayLocal();
+ 
+        $('transaction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = $('form-msg');
+            const btn = $('save-btn');
+            msg.className = 'form-msg full';
+ 
+            const description = $('description').value.trim();
+            const amount = Number($('amount').value);
+            const date = $('date').value;
+ 
+            if (!description || !(amount > 0) || !date) {
+                msg.textContent = 'Veuillez renseigner un montant, une date et une description.';
+                msg.className = 'form-msg full show';
+                return;
+            }
+ 
+            btn.disabled = true;
+            btn.textContent = 'Enregistrement…';
+ 
+            try {
+                const res = await api('/api/transactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ type: currentType, amount, description, date })
+                });
+ 
+                if (!res.ok) {
+                    let detail = '';
+                    try { detail = (await res.json()).error || ''; } catch (_) {}
+                    msg.textContent = detail || "Erreur lors de l'enregistrement.";
+                    msg.className = 'form-msg full show';
+                    return;
+                }
+ 
+                $('transaction-form').reset();
+                $('date').value = todayLocal();
+                setType('recette');
+                await loadTransactions();
+                toast('Transaction enregistrée ✓');
+            } catch (err) {
+                if (err.message === 'session') return;
+                msg.textContent = 'Connexion au serveur impossible. Réessayez.';
+                msg.className = 'form-msg full show';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Enregistrer';
+            }
+        });
+ 
+        /* ---------- Suppression ---------- */
+        const dialog = $('confirm-dialog');
+        let pendingDeleteId = null;
+ 
+        $('transaction-table-body').addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-delete');
+            if (!btn) return;
+            const tx = transactions.find((t) => String(t.id) === btn.dataset.id);
+            if (!tx) return;
+            pendingDeleteId = tx.id;
+            $('confirm-text').textContent =
+                `${tx.description} — ${tx.type === 'recette' ? '+' : '−'}${formatAmount(tx.amount)}`;
+            dialog.showModal();
+        });
+ 
+        $('confirm-cancel').addEventListener('click', () => { pendingDeleteId = null; dialog.close(); });
+ 
+        $('confirm-ok').addEventListener('click', async () => {
+            const id = pendingDeleteId;
+            dialog.close();
+            if (id === null) return;
+            pendingDeleteId = null;
+ 
+            const row = document.querySelector(`tr[data-id="${CSS.escape(String(id))}"]`);
+            const rowBtn = row && row.querySelector('.btn-delete');
+            if (rowBtn) rowBtn.disabled = true;
+ 
+            try {
+                const res = await api('/api/transactions/' + encodeURIComponent(id), { method: 'DELETE' });
+                if (!res.ok) throw new Error('http ' + res.status);
+ 
+                if (row) row.classList.add('removing');
+                transactions = transactions.filter((t) => String(t.id) !== String(id));
+                setTimeout(render, 280);
+                toast('Transaction supprimée');
+            } catch (err) {
+                if (err.message === 'session') return;
+                if (rowBtn) rowBtn.disabled = false;
+                toast('Suppression impossible. Réessayez.', true);
+            }
+        });
+ 
+        // Fermer la boîte de dialogue en cliquant à côté
+        dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+ 
+        /* ---------- Export CSV (selon les filtres actifs) ---------- */
+        function exportToCSV() {
+            const list = getFiltered();
+            if (!list.length) { toast('Aucune donnée à exporter.', true); return; }
+ 
+            // Empêche l'interprétation de formules par Excel et échappe les guillemets
+            const cell = (v) => {
+                let s = String(v ?? '');
+                if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+                return '"' + s.replace(/"/g, '""') + '"';
+            };
+ 
+            const hasSeller = list.some((t) => t.seller);
+            const header = ['Date', 'Type', 'Description', 'Montant (F)'];
+            if (hasSeller) header.push('Vendeur');
+ 
+            const rows = list.map((t) => {
+                const signed = t.type === 'recette' ? t.amount : -t.amount;
+                const row = [formatDate(t.iso), t.type === 'recette' ? 'Recette' : 'Dépense', t.description, signed];
+                if (hasSeller) row.push(t.seller);
+                return row.map(cell).join(';');
+            });
+ 
+            // BOM UTF-8 + séparateur « ; » pour une ouverture correcte dans Excel (version française)
+            const csv = '\uFEFF' + [header.map(cell).join(';'), ...rows].join('\r\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lezin-service-${todayLocal()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            toast(`${list.length} ligne${list.length > 1 ? 's' : ''} exportée${list.length > 1 ? 's' : ''}`);
+        }
+ 
+        /* ---------- Déconnexion ---------- */
+        async function logout() {
+            try { localStorage.removeItem('userPhone'); } catch (_) {}
+            try {
+                await fetch('/api/logout', { method: 'POST', credentials: 'same-origin' });
+            } catch (_) { /* on redirige quoi qu'il arrive */ }
+            window.location.href = '/login.html';
+        }
+ 
+        applyRole();
+        loadTransactions();
+    </script>
+</body>
+</html>
+ 

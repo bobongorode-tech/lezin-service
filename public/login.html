@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f5f7">
+    <meta name="color-scheme" content="light">
+    <title>Connexion — Lezin Service</title>
+    <!-- Icône pour navigateur et Android -->
+    <link rel="icon" type="image/png" href="/icon.png">
+ 
+    <!-- Icône spécifique pour iPhone / iPad (Écran d'accueil) -->
+    <link rel="apple-touch-icon" href="/icon.png">
+ 
+    <!-- Lien vers le fichier manifest PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <style>
+        :root {
+            --text: #1d1d1f;
+            --text-2: #6e6e73;
+            --text-3: #86868b;
+            --accent: #0071e3;
+            --accent-hover: #0077ed;
+            --field-bg: rgba(255, 255, 255, 0.9);
+            --field-border: #d2d2d7;
+            --danger: #d70015;
+            --danger-bg: rgba(255, 59, 48, 0.10);
+            --radius-card: 28px;
+            --radius-field: 14px;
+            --ease: cubic-bezier(0.25, 1, 0.5, 1);
+        }
+ 
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html { -webkit-text-size-adjust: 100%; }
+ 
+        body {
+            margin: 0;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+                     max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text);
+            background-color: #f5f5f7;
+            background-image:
+                radial-gradient(60% 50% at 12% 0%, rgba(0, 113, 227, 0.16) 0%, transparent 70%),
+                radial-gradient(50% 45% at 92% 100%, rgba(175, 82, 222, 0.12) 0%, transparent 70%),
+                linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
+            background-attachment: fixed;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+ 
+        .card {
+            width: 100%;
+            max-width: 400px;
+            padding: clamp(28px, 6vw, 44px) clamp(22px, 6vw, 36px);
+            background: rgba(255, 255, 255, 0.72);
+            -webkit-backdrop-filter: saturate(180%) blur(30px);
+            backdrop-filter: saturate(180%) blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            border-radius: var(--radius-card);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+            animation: rise 0.7s var(--ease) both;
+        }
+ 
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(16px) scale(0.98); }
+            to   { opacity: 1; transform: none; }
+        }
+ 
+        .brand { text-align: center; margin-bottom: 28px; }
+ 
+        .brand-mark {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 16px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            font-size: 26px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(145deg, #4da3ff 0%, var(--accent) 55%, #0050b3 100%);
+            box-shadow: 0 8px 20px rgba(0, 113, 227, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+        }
+ 
+        .brand-logo {
+            font-size: clamp(24px, 6vw, 28px);
+            font-weight: 700;
+            letter-spacing: -0.7px;
+            line-height: 1.1;
+        }
+ 
+        #form-title {
+            margin: 8px 0 0;
+            font-size: 15px;
+            font-weight: 400;
+            letter-spacing: -0.2px;
+            color: var(--text-2);
+        }
+ 
+        /* Champs à libellé flottant */
+        .field { position: relative; margin-bottom: 12px; }
+ 
+        .field input {
+            width: 100%;
+            height: 56px;
+            padding: 22px 16px 8px;
+            font: inherit;
+            font-size: 16px; /* évite le zoom automatique sur iOS */
+            color: var(--text);
+            background: var(--field-bg);
+            border: 1px solid var(--field-border);
+            border-radius: var(--radius-field);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+        }
+ 
+        .field input::placeholder { color: transparent; }
+ 
+        .field label {
+            position: absolute;
+            left: 17px;
+            top: 18px;
+            font-size: 16px;
+            color: var(--text-3);
+            pointer-events: none;
+            transform-origin: left top;
+            transition: transform 0.25s var(--ease), color 0.25s var(--ease);
+        }
+ 
+        .field input:focus + label,
+        .field input:not(:placeholder-shown) + label { transform: translateY(-11px) scale(0.76); }
+ 
+        .field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.18);
+        }
+ 
+        .field input:focus + label { color: var(--accent); }
+ 
+        .field.has-toggle input { padding-right: 52px; }
+ 
+        .eye {
+            position: absolute;
+            right: 6px;
+            top: 6px;
+            width: 44px;
+            height: 44px;
+            display: grid;
+            place-items: center;
+            padding: 0;
+            color: var(--text-3);
+            background: transparent;
+            border: 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: color 0.2s var(--ease);
+        }
+ 
+        .eye:hover { color: var(--text); }
+        .eye:focus-visible { outline: 2px solid var(--accent); }
+        .eye svg { width: 22px; height: 22px; }
+        .eye .off { display: none; }
+        .eye[aria-pressed="true"] .on { display: none; }
+        .eye[aria-pressed="true"] .off { display: block; }
+ 
+        .message {
+            display: none;
+            margin: 4px 0 6px;
+            padding: 11px 14px;
+            font-size: 14px;
+            line-height: 1.4;
+            color: var(--danger);
+            background: var(--danger-bg);
+            border-radius: 12px;
+        }
+        .message.show { display: block; }
+ 
+        /* Bouton principal */
+        .submit {
+            width: 100%;
+            height: 52px;
+            margin-top: 14px;
+            font: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+            color: #fff;
+            background: var(--accent);
+            border: 0;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(0, 113, 227, 0.35);
+            transition: background 0.25s var(--ease), transform 0.2s var(--ease);
+        }
+ 
+        .submit:hover { background: var(--accent-hover); }
+        .submit:active { transform: scale(0.98); }
+        .submit:focus-visible { outline: 3px solid rgba(0, 113, 227, 0.45); outline-offset: 2px; }
+        .submit:disabled { opacity: 0.75; cursor: default; }
+ 
+        .submit .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            margin: auto;
+            border: 2.5px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+ 
+        .submit.loading .label { display: none; }
+        .submit.loading .spinner { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+ 
+        .toggle {
+            display: block;
+            margin: 22px auto 0;
+            padding: 6px 10px;
+            font: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent);
+            background: none;
+            border: 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s var(--ease);
+        }
+ 
+        .toggle:hover { opacity: 0.75; text-decoration: underline; }
+        .toggle:focus-visible { outline: 2px solid var(--accent); }
+ 
+        @media (max-width: 380px) {
+            .card { border-radius: 24px; }
+            .brand-mark { width: 48px; height: 48px; font-size: 22px; }
+        }
+ 
+        @media (max-height: 560px) {
+            body { align-items: flex-start; }
+            .brand { margin-bottom: 16px; }
+            .brand-mark { display: none; }
+        }
+ 
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <main class="card">
+        <div class="brand">
+            <div class="brand-mark" aria-hidden="true">L</div>
+            <div class="brand-logo">Lezin Service</div>
+            <p id="form-title">Connexion à votre espace</p>
+        </div>
+ 
+        <form id="auth-form" novalidate>
+            <div class="field">
+                <input type="tel" id="phone" name="phone" placeholder="Numéro de téléphone"
+                       autocomplete="username tel" inputmode="tel" autocapitalize="off" spellcheck="false" required>
+                <label for="phone">Numéro de téléphone</label>
+            </div>
+ 
+            <div class="field has-toggle">
+                <input type="password" id="password" name="password" placeholder="Mot de passe"
+                       autocomplete="current-password" required>
+                <label for="password">Mot de passe</label>
+                <button type="button" class="eye" id="eye" aria-label="Afficher le mot de passe" aria-pressed="false">
+                    <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.9 17.9A10.1 10.1 0 0 1 12 19c-6.4 0-10-7-10-7a18 18 0 0 1 4.1-5.1M9.9 5.2A9.7 9.7 0 0 1 12 5c6.4 0 10 7 10 7a18 18 0 0 1-2.2 3.2M1 1l22 22"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+                </button>
+            </div>
+ 
+            <div class="message" id="message" role="alert" aria-live="polite"></div>
+ 
+            <button type="submit" class="submit" id="submit-btn">
+                <span class="label">Se connecter</span>
+                <span class="spinner" aria-hidden="true"></span>
+            </button>
+        </form>
+ 
+        <button type="button" class="toggle" id="toggle" onclick="toggleMode()">Créer un compte</button>
+    </main>
+ 
+    <script>
+        let isLogin = true;
+ 
+        const form = document.getElementById('auth-form');
+        const title = document.getElementById('form-title');
+        const toggle = document.getElementById('toggle');
+        const submitBtn = document.getElementById('submit-btn');
+        const submitLabel = submitBtn.querySelector('.label');
+        const passwordInput = document.getElementById('password');
+        const message = document.getElementById('message');
+        const eye = document.getElementById('eye');
+ 
+        function showError(text) {
+            message.textContent = text;
+            message.className = 'message show';
+        }
+ 
+        function clearError() {
+            message.textContent = '';
+            message.className = 'message';
+        }
+ 
+        // Bascule entre connexion et inscription
+        function toggleMode() {
+            isLogin = !isLogin;
+            title.textContent = isLogin ? "Connexion à votre espace" : "Créer un nouveau compte";
+            submitLabel.textContent = isLogin ? "Se connecter" : "S'inscrire";
+            toggle.textContent = isLogin ? "Créer un compte" : "Déjà un compte ? Se connecter";
+            passwordInput.setAttribute('autocomplete', isLogin ? 'current-password' : 'new-password');
+            clearError();
+        }
+ 
+        // Afficher / masquer le mot de passe
+        eye.addEventListener('click', () => {
+            const show = passwordInput.type === 'password';
+            passwordInput.type = show ? 'text' : 'password';
+            eye.setAttribute('aria-pressed', show);
+            eye.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
+        });
+ 
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            clearError();
+ 
+            const phone = document.getElementById('phone').value.trim();
+            const password = passwordInput.value;
+ 
+            if (!phone || !password) {
+                showError("Veuillez renseigner votre numéro et votre mot de passe.");
+                return;
+            }
+ 
+            const endpoint = isLogin ? '/api/login' : '/api/register';
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+ 
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ phone, password })
+                });
+ 
+                let data = {};
+                try { data = await res.json(); } catch (_) {}
+ 
+                if (data.success) {
+                    if (isLogin) {
+                        try { localStorage.setItem('userPhone', phone); } catch (_) {} // Sauvegarde le numéro
+                        window.location.href = '/dashboard.html';
+                        return;
+                    }
+                    alert("Compte créé avec succès ! Connectez-vous.");
+                    passwordInput.value = '';
+                    toggleMode();
+                } else {
+                    showError(data.error || "Une erreur est survenue. Réessayez.");
+                }
+            } catch (err) {
+                showError("Connexion au serveur impossible. Vérifiez votre réseau et réessayez.");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('loading');
+            }
+        });
+    </script>
+</body>
+</html>
+ 

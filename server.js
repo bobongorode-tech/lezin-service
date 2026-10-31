@@ -5,70 +5,38 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 1. Middleware pour analyser les requêtes JSON et les formulaires
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// 2. Servir les fichiers statiques (HTML, CSS, JS, images, PWA) depuis le dossier 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 3. Connexion et initialisation de la base de données SQLite (cremerie.db)
+// Base de données SQLite
 const dbPath = path.resolve(__dirname, 'cremerie.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error('Erreur d\'ouverture de la base de données :', err.message);
+    console.error('Erreur DB :', err.message);
   } else {
-    console.log('Connecté à la base de données SQLite (cremerie.db).');
+    console.log('Connecté à la base de données SQLite.');
   }
 });
 
-// Création automatique de la table users et d'un compte admin par défaut si la table est vide
+// Création de la table users si elle n'existe pas
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE,
     password TEXT
   )`, (err) => {
-    if (!err) {
-      db.get(`SELECT COUNT(*) as count FROM users`, (err, row) => {
-        if (row && row.count === 0) {
-          db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, ['admin', '1234'], (err) => {
-            if (!err) console.log('Utilisateur administrateur par défaut créé (admin / 1234).');
-          });
-        }
-      });
-    }
+    if (err) console.error("Erreur création table :", err.message);
   });
 });
 
-// 4. Routes de l'application
-
-// Route racine : sert la page de connexion
+// Route racine
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Route API de Connexion (/api/login)
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-
-  db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ success: false, message: 'Erreur interne du serveur' });
-    }
-    
-    if (row) {
-      // Connexion réussie, renvoie l'URL de redirection vers le dashboard
-      res.json({ success: true, redirect: '/dashboard.html' });
-    } else {
-      // Identifiants incorrects
-      res.status(401).json({ success: false, message: 'Nom d\'utilisateur ou mot de passe incorrect' });
-    }
-  });
-});
-
-// Route API d'Inscription (/api/register)
+// Route Inscription (/api/register)
 app.post('/api/register', (req, res) => {
   const { username, password } = req.body;
 
@@ -78,14 +46,30 @@ app.post('/api/register', (req, res) => {
 
   db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, password], function(err) {
     if (err) {
-      console.error(err);
-      return res.status(400).json({ success: false, message: 'Ce nom d\'utilisateur existe déjà ou une erreur est survenue' });
+      return res.status(400).json({ success: false, message: 'Ce nom d\'utilisateur existe déjà' });
     }
-    res.json({ success: true, message: 'Utilisateur créé avec succès' });
+    res.json({ success: true, message: 'Compte créé avec succès' });
   });
 });
 
-// 5. Démarrage du serveur
+// Route Connexion (/api/login)
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+
+  db.get(`SELECT * FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
+    
+    if (row) {
+      res.json({ success: true, redirect: '/dashboard.html' });
+    } else {
+      res.status(401).json({ success: false, message: 'Identifiants incorrects' });
+    }
+  });
+});
+
+// Démarrage
 app.listen(PORT, () => {
-  console.log(`Serveur en cours d'exécution sur le port ${PORT}`);
+  console.log(`Serveur démarré sur le port ${PORT}`);
 });
